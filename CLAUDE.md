@@ -25,6 +25,13 @@ assets/rotary-logo.png -> real logo file (was a Drive hotlink, now local)
 CNAME                  -> custom domain config, do not remove
 docs/DTC-DESIGN.md     -> full DiskwenTulong Card design detail
 docs/CONTENT-MANAGEMENT.md -> Google Drive content sync procedure
+docs/PROJECTS-PAGE.md  -> Service Projects page workflow (succession,
+                           image sizing, share button, lightbox) —
+                           superseded by the data-driven rework below,
+                           now live
+docs/SERVICE-PROJECTS-DESIGN.md -> data-driven Service Projects rework
+                           (Areas of Focus / Avenues of Service), BUILT
+                           and live, currently one placeholder entry
 ```
 
 `foundation/` has been removed entirely (no redirect, deliberately a 404)
@@ -57,7 +64,14 @@ Tailwind 3.4.17 (CDN), vanilla JS, Lucide icons 0.263.0 (CDN), Google Fonts
 - Projects page has one real project (BINHI ng Kinabukasan) in the
   "Most Recent Service Project" slot; the archive grid below is still
   placeholder — 5 more real projects exist in the Drive summary sheet
-  but have no matching photos yet.
+  but have no matching photos yet. Hero image now sized to match the
+  homepage's "What We Do" carousel (`aspect-video`, contained in
+  `max-w-7xl`, no more full-bleed background); archive cards open a
+  click-to-popup lightbox; both hero and lightbox have a Share button
+  (Web Share API with the project's actual image file, not a Facebook
+  link — see docs/PROJECTS-PAGE.md §4 for why). Succession workflow
+  when a new project launches is manual (no CMS) — see
+  docs/PROJECTS-PAGE.md §1.
 - DTC backend is now live: ONE Apps Script Web App deployment
   ("Access: Anyone", 2026-07-19), shared by `/diskwentulong/` (live
   getPartners, falls back to the static partners.json if empty/
@@ -113,8 +127,18 @@ doing any Drive-related content work.
 - Site-wide max-width (1280px, `max-w-7xl` everywhere) leaves large empty
   margins on very wide monitors — a pending decision, not yet actioned;
   must be done consistently across ALL sections if done at all
-- "Latest project" (homepage + Projects page) is manually curated HTML,
-  not date-sorted — no data source exists yet for real sorting
+- Projects page rebuilt 2026-07-20 as data-driven, organized by
+  Rotary's Areas of Focus / Avenues of Service (see
+  docs/SERVICE-PROJECTS-DESIGN.md) — Featured/Latest is now sorted by
+  the Drive Tracker sheet's own `date` column, not manually curated.
+  One real project is now live (BINHI NG KINABUKASAN, real photo
+  resized/optimized). 5 more real Tracker rows exist (real names +
+  descriptions) but are NOT yet built — each is missing `category`
+  and/or `date` in the sheet (not just a missing photo), and those
+  fields were deliberately not guessed since category is a permanent
+  public label and date drives the Featured sort — see design doc §6
+  for exactly what's missing per row. Homepage's separate "What We Do"
+  carousel (`assets/recent-projects/`) is untouched by this rework.
 
 ## Keep this file updated
 After a change affecting "Current status" or "Known placeholders," update
