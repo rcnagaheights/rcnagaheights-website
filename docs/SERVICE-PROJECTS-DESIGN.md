@@ -1,5 +1,5 @@
 # Service Projects Page — Data-Driven Rework
-Version: v1.3 · Last updated: 2026-07-20
+Version: v1.4 · Last updated: 2026-07-20
 
 ## Status
 Design CONFIRMED and BUILT (2026-07-20). Live at `/projects/`, rendering
@@ -126,9 +126,16 @@ below).
   (`assets/service-projects/binhi-ng-kinabukasan.png`, 3.7MB) — resized
   to 1600px wide and re-compressed as JPEG (274KB) per the §2 sizing
   guidance, moved to
-  `assets/service-projects/areas-of-focus/binhi-ng-kinabukasan.jpg`,
-  and mirrored to the same-named file in Drive's "Areas of Focus"
-  subfolder. `assets/service-projects/service-projects.json` now
+  `assets/service-projects/areas-of-focus/binhi-ng-kinabukasan.jpg`.
+  **Not mirrored to Drive's "Areas of Focus" subfolder** — a prior
+  version of this doc claimed it was, but that was wrong. Two upload
+  attempts (274KB, then a further-compressed ~86KB retry) both failed:
+  this environment's Drive tool rejects any single call whose payload
+  exceeds ~38,000 base64 characters (roughly 28KB of source image), well
+  under this photo's size either way. No corrupted file was left on
+  Drive from either attempt. Left as a known gap, not being pursued
+  further — the live site serves the repo copy either way, so nothing
+  user-facing is affected. `assets/service-projects/service-projects.json` now
   contains this one real entry (`category_group: "areas_of_focus"`,
   parsed from the sheet's `"Area of Focus - X"` / `"Avenue of Service -
   Y"` string format — split on `" - "`, first part maps to the group,
