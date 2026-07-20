@@ -16,9 +16,9 @@ verify/index.html       -> /verify/  (public, no-index: partner-counter
                              card verification, printed at partner
                              counters per docs/DTC-DESIGN.md §4)
 register/index.html     -> /register/ (no-index: register a client's
-                             card — NO auth of any kind as of 2026-07-19,
-                             an accepted tradeoff, see docs/DTC-DESIGN.md
-                             §3 before assuming this is a bug)
+                             card — Google Sign-In restricted to
+                             @rcnagaheights.org, confirmed working live
+                             as of 2026-07-20, see docs/DTC-DESIGN.md §3)
 bulletin/index.html      -> /bulletin/   (exists, not linked in nav yet)
 contact/index.html       -> /contact/    (also holds "Get Involved")
 assets/rotary-logo.png -> real logo file (was a Drive hotlink, now local)
@@ -65,20 +65,26 @@ Tailwind 3.4.17 (CDN), vanilla JS, Lucide icons 0.263.0 (CDN), Google Fonts
   authentication has been tried 3 times: Session.getActiveUser() (broken
   for cross-origin fetch), a Google Sign-In + ID-token flow (dropped as
   too much Cloud Console setup at the time, leaving a no-auth window),
-  then re-added a 3rd time (2026-07-19): Google Sign-In restricted to
+  then re-added a 3rd time: Google Sign-In restricted to
   @rcnagaheights.org via the OAuth consent screen's "Internal" setting +
-  ID-token verification. Live-tested that attempt (Code.gs v5) — sign-in
-  worked but registration still failed on a `email_verified` boolean-vs-
-  string type mismatch inside `verifyIdToken_`; fixed in Code.gs v6
-  (current state, not yet re-tested — user still needs to paste v6 in
-  and redeploy). See docs/DTC-DESIGN.md §3 for the full history before
-  assuming the current state is a bug or changing it again. Register +
-  verify were
-  confirmed working end-to-end 2026-07-19 in the prior no-auth state
-  (real test: registered DTC-TEST-00001, then verified it showed ACTIVE
-  with correct dates) — still worth a fuller pass (multiple cards,
-  invalid numbers, already-registered cards) before any real physical
-  card printing run. The "Digital Bulletin" nav link is still
+  ID-token verification. This 3rd attempt needed two separate fixes
+  before it actually worked, confirmed live 2026-07-20: (1) Code.gs v6
+  fixed an `email_verified` boolean-vs-string type mismatch inside
+  `verifyIdToken_`; (2) Code.gs v7 — not a code bug at all — the script
+  had never been granted the `script.external_request` Apps Script
+  authorization scope (no version before v5 ever called
+  UrlFetchApp.fetch against an external host), which a background Web
+  App request can't self-grant since it has no interactive session;
+  fixed by manually running a one-time `authorizeExternalRequest()`
+  helper from the Apps Script editor to trigger that consent screen.
+  Live-tested 2026-07-20: registered DTC-TEST-00002 while signed in as
+  admin@rcnagaheights.org, `registered_by` recorded correctly. See
+  docs/DTC-DESIGN.md §3 for the full history. Register + verify were
+  also confirmed working end-to-end 2026-07-19 in the prior no-auth
+  state (real test: registered DTC-TEST-00001, then verified it showed
+  ACTIVE with correct dates) — still worth a fuller pass (multiple
+  cards, invalid numbers, already-registered cards) before any real
+  physical card printing run. The "Digital Bulletin" nav link is still
   deliberately absent — that backend doesn't exist.
 
 ## Content management (Google Drive)

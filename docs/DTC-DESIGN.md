@@ -1,5 +1,5 @@
 # DiskwenTulong Card (DTC) — Design Detail
-Version: v6.1 · Last updated: 2026-07-19
+Version: v6.2 · Last updated: 2026-07-20
 Mirrors: Google Drive "PROPOSAL - DTC Phase 2 Workflow v2.txt" and
 "PROPOSAL - DTC Cardholder Brochure Page v1.txt" — if those Drive docs
 and this file ever disagree, ask the user which is current before
@@ -72,18 +72,23 @@ CONFIRMED WORKING as of 2026-07-19:**
    project) too much ongoing complexity at the time, and dropped member
    identity capture entirely instead (this was v4 — `/register/` briefly
    had NO authentication of any kind).
-3. **Current, as of 2026-07-19: the user went through the Cloud Console
+3. **Current, as of 2026-07-20: the user went through the Cloud Console
    setup after all** (OAuth consent screen configured as "Internal" —
    restricts to `@rcnagaheights.org` Workspace accounts only — plus a
    Web application OAuth Client ID with Authorized JavaScript origin
    `https://rcnagaheights.org`). `/register/` has the Sign In With
-   Google button again; `Code.gs` (v5) verifies the resulting ID token's
+   Google button again; `Code.gs` (v6) verifies the resulting ID token's
    audience and `@rcnagaheights.org` domain via `verifyIdToken_()`. NO
    separate Members-sheet allowlist this time — the "Internal" consent
    screen setting itself is the domain restriction, so any
    `@rcnagaheights.org` Workspace account can register a card, not just
    a specific vetted subset. Add a Members-sheet check back later if
    that finer restriction is ever wanted.
+   **CONFIRMED WORKING END-TO-END LIVE 2026-07-20** (see the status
+   update below for the full diagnosis — two separate bugs had to be
+   fixed after the initial deploy before this actually worked: a
+   `email_verified` type mismatch in the code, and a missing Apps
+   Script authorization scope that had nothing to do with the code).
 
 **Deployment note, important if this ever breaks again:** unlike
 attempt 2, this does NOT need a separate domain-restricted deployment.
@@ -203,6 +208,18 @@ environment's network policy blocks `script.google.com` entirely, so
 Claude could not verify a single request/response end-to-end. See open
 items below for specific untested risks.
 
+## Status update — 2026-07-20: /register/ member auth confirmed working live
+
+Code.gs v7 uploaded to Drive (adds a one-time `authorizeExternalRequest()`
+helper on top of v6 — no logic changes to `verifyIdToken_`). See §3 and
+the corresponding open item above for the full two-bug diagnosis
+(`email_verified` type mismatch, then a missing
+`script.external_request` Apps Script authorization scope). Live-tested:
+sign in as an `@rcnagaheights.org` account, register a card, verified
+`registered_by` is recorded correctly in the batch sheet. This closes out
+the 3-attempt member-auth saga described in §3 — the mechanism is now
+considered stable, not experimental.
+
 ## Open items
 - [x] **Category assignments** — all 28 entries in
       assets/merchants/partners.json now user-confirmed (2026-07-19):
@@ -232,31 +249,52 @@ items below for specific untested risks.
       first real confirmation any of the DTC backend actually works —
       previously only structurally verified, never live-tested (this
       environment's network policy blocks `script.google.com` entirely).
-- [ ] **Member auth on /register/ — 3rd attempt, one live bug found +
-      fixed 2026-07-19 (Code.gs v6), re-test pending.** Full history in
-      §3 (this item was getting long enough to duplicate it here).
-      Short version: attempt 1 (`Session.getActiveUser()`) confirmed
-      broken live; attempt 2 (Sign-In button + Members-sheet allowlist)
-      was built but the Cloud Console setup got dropped as too much
-      complexity at the time (Code.gs v4 had NO auth for a while, since
-      confirmed working live in that no-auth state); attempt 3 (Code.gs
-      v5) — user completed the Cloud Console setup after all, OAuth
-      consent screen set to "Internal" (restricts to
-      `@rcnagaheights.org`), Sign-In button back on `/register/`.
-      **Live-tested 2026-07-19: sign-in itself worked (showed the
-      correct signed-in email), but registration still failed** with
-      "Could not verify your Google account" — root cause found:
-      Google's `tokeninfo` endpoint can return `email_verified` as a
-      real boolean `true` rather than the string `"true"`, and v5's
-      strict `!== 'true'` comparison rejected a genuinely verified token
-      purely on that type mismatch. **Fixed in Code.gs v6** (coerces
-      with `String(...)` before comparing) — also added `logAction_`
-      calls at every rejection branch inside `verifyIdToken_` so any
-      future failure can be diagnosed from the Logs tab instead of
-      guessing blind. **Only ONE Web App deployment needed** ("Access:
-      Anyone"), shared by all three actions. **Not yet re-tested** —
-      user still needs to paste Code.gs v6 in and redeploy the existing
-      deployment as a new version before this can be confirmed fixed.
+- [x] **Member auth on /register/ — 3rd attempt, CONFIRMED WORKING LIVE
+      2026-07-20.** Full history in §3 (this item was getting long
+      enough to duplicate it here). Short version: attempt 1
+      (`Session.getActiveUser()`) confirmed broken live; attempt 2
+      (Sign-In button + Members-sheet allowlist) was built but the
+      Cloud Console setup got dropped as too much complexity at the
+      time (Code.gs v4 had NO auth for a while, since confirmed working
+      live in that no-auth state); attempt 3 — user completed the Cloud
+      Console setup after all, OAuth consent screen set to "Internal"
+      (restricts to `@rcnagaheights.org`), Sign-In button back on
+      `/register/`. Two separate bugs had to be found and fixed before
+      this actually worked, neither obvious from the first symptom
+      alone:
+      1. **Code.gs v5 -> v6:** Google's `tokeninfo` endpoint can return
+         `email_verified` as a real boolean `true` rather than the
+         string `"true"`, and v5's strict `!== 'true'` comparison
+         rejected a genuinely verified token purely on that type
+         mismatch. Fixed by coercing with `String(...)` before
+         comparing. Also added `logAction_` calls at every rejection
+         branch inside `verifyIdToken_` so a failure can be diagnosed
+         from the Logs tab instead of guessing blind — this diagnostic
+         is what found bug 2 below.
+      2. **Not a code bug at all:** after pasting v6 in and redeploying,
+         registration still failed with the exact same user-facing
+         error. The Logs tab showed the real cause: `Exception: Wala
+         kang pahintulot na tumawag kay UrlFetchApp.fetch. Mga
+         kinakailangang pahintulot:
+         https://www.googleapis.com/auth/script.external_request` — the
+         script had never been granted the `script.external_request`
+         OAuth scope, because no version before v5 ever called
+         `UrlFetchApp.fetch()` against an external host. A background
+         Web App request has no interactive session, so it can't show
+         the one-time consent screen itself — it just throws. Fixed by
+         adding a throwaway `authorizeExternalRequest()` function (no
+         trailing underscore — Apps Script hides `_`-suffixed functions
+         from the Run dropdown, which briefly made this hard to trigger)
+         and running it manually once from the editor to grant the
+         scope interactively. No redeploy was needed for the scope grant
+         itself, since it's tied to the script owner's authorization,
+         not to a deployment version. Uploaded as Code.gs v7 in Drive
+         (adds the helper function + this history to the file header;
+         no change to `verifyIdToken_`'s actual logic from v6).
+      **Only ONE Web App deployment needed** ("Access: Anyone"), shared
+      by all three actions. Live-tested 2026-07-20: `DTC-TEST-00002`
+      registered successfully with `registered_by: admin@rcnagaheights.org`
+      recorded correctly in the Sheet.
 - [ ] **Merchant-selection tracking, documented but not implemented.**
       §4 says the `/verify/` dropdown ("Which merchant are you at?") is
       "for usage tracking" — but Code.gs v2's `verifyCard_`/
