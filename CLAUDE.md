@@ -41,6 +41,12 @@ docs/BACKEND-CAPABILITY-TEST.md -> what Claude has actually tested (not
 docs/Rotarians.md      -> /rotarians/ roster rules, incl. the Council of
                            Presidents section (added 2026-07-21) and how
                            to update it each Rotary Year
+docs/agent-teams.md    -> reference guide for Claude Code's agent-teams
+                           feature (generic, not project content); it IS
+                           enabled, but only via a local, untracked
+                           .claude/settings.local.json (git-ignored, not
+                           committed) — a fresh clone won't have it on
+                           until that file is (re)created locally
 ```
 
 `foundation/` has been removed entirely (no redirect, deliberately a 404)
@@ -216,6 +222,16 @@ No build step, no test suite. Before considering an HTML edit done:
 - Grep for `canva://` and `drive.google.com` — neither should ever appear
 - Confirm internal links use trailing-slash paths (`/rotarians/`, not
   `/rotarians`) to match the folder+index.html structure GitHub Pages uses
+
+`index.html` and `rotarians/index.html` (only) still carry harmless
+leftover Canva-export markup — `class="canva-text"`/`canva-button`/
+`canva-image`, `data-template-id="..."` attributes, and inline `style=`
+duplicating the Tailwind classes right next to them. None of this is
+wired to any CSS rule; it's dead weight, not a bug, and the
+`canva://`/`drive.google.com` grep above won't catch it since it's not a
+live link. Don't "clean it up" incidentally while touching an unrelated
+line in these two files — treat it as a separate, deliberate task if
+ever done.
 
 ## Fuller background
 Deeper project history and rationale (why GitHub Pages over Canva, full
